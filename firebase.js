@@ -1,5 +1,5 @@
 
-  firebase.initializeApp({
+ firebase.initializeApp({
     apiKey: "AIzaSyCXs28dXzAYbDCGHJMb2wpxL0NiNHoMMTg",
     authDomain: "fd2-sokoban-kopylova.firebaseapp.com",
     databaseURL: "https://fd2-sokoban-kopylova-default-rtdb.firebaseio.com/",

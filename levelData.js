@@ -1,5 +1,5 @@
-   // карта первого уровня
-   //0 - стена //  1- игроr //  2- фон //  3- куб //  4-цель //  5- успех
+   // level maps
+   //0 - wall //  1- player //  2- background //  3- cube //  4-target //  5- success
 level1 = [
     [0,0,0,0,0,0],
     [0,1,2,2,2,0],
@@ -82,6 +82,6 @@ level1 = [
     [0,2,2,4,2,2,0],
     [0,0,0,0,0,0,0]
    ];
-   var audioWalking = new Audio('sounds/walking.mp3');
-   var audioWall = new Audio('sounds/wall.mp3');
-   var audioSuccess = new Audio('sounds/success.mp3');
+   const audioWalking = new Audio('sounds/walking.mp3');
+   const audioWall = new Audio('sounds/wall.mp3');
+   const audioSuccess = new Audio('sounds/success.mp3');

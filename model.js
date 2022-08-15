@@ -14,14 +14,14 @@ class Model {
     }
 
     updateState(hashPageName, level, targetLevel) { // SPA
-        let myView = this.view; //  чтобы не потерять this
+        let myView = this.view;
         if (hashPageName === 'play') {
             this.targetLevel = targetLevel;
             this.restartLevel = level;
             this.view.renderContent(hashPageName, this.countMove);
             this.view.showMoves(this.countMove);
             this.view.showLevel(this.targetLevel);
-            this.map = this.deepCopy(level);//создать глубокую копию уровня, чтобы работать только с копией
+            this.map = this.deepCopy(level);// working with a deepCopy of the map
             this.level = targetLevel.innerText;
 
         } else if (hashPageName === 'menu') {
@@ -30,17 +30,16 @@ class Model {
             firebase.auth().onAuthStateChanged(function (user) {
                 if (user) {
                     // User is signed in.
-                    var ref = firebase.database().ref();
+                    const ref = firebase.database().ref();
                     ref.child("users").orderByChild("email").equalTo(`${user.email}`).once("value", snapshot => {
                         if (snapshot.exists()) {
                             const userData = snapshot.val();
-                            var userDataName = Object.keys(userData);
-                            var username = userData[userDataName].username;
+                            const userDataName = Object.keys(userData);
+                            const username = userData[userDataName].username;
                             myView.sayHi(username.toUpperCase());
                         }
                     });
                 } else {
-                    // console.log('No user is signed in');
                     myView.renderContent('registration');
                 }
             });
@@ -51,13 +50,13 @@ class Model {
             firebase.auth().onAuthStateChanged(function (user) {
                 if (user) {
                     // User is signed in.
-                    var ref = firebase.database().ref();
+                    const ref = firebase.database().ref();
                     ref.child("users").orderByChild("email").equalTo(`${user.email}`).once("value", snapshot => {
                         if (snapshot.exists()) {
                             const userData = snapshot.val();
-                            var userDataName = Object.keys(userData);
-                            var username = userData[userDataName].username;
-                            var passedLevels = Number(userData[userDataName].level); // пройденный уровни
+                            const userDataName = Object.keys(userData);
+                            const username = userData[userDataName].username;
+                            const passedLevels = Number(userData[userDataName].level);
                             myView.letPlay(passedLevels);
                         }
                     });
@@ -72,17 +71,17 @@ class Model {
         }
     }
 
-    goBack() { // возврат в меню
+    goBack() { // back to menu
         this.view.renderContent('menu');
     }
 
-    //ф-я глубокого копирования для работы с картой уровня
+    //deepCopy func
     deepCopy = (arr) => {
-        var out = [];
-        for (var i = 0, len = arr.length; i < len; i++) {
-            var item = arr[i];
-            var obj = [];
-            for (var k in item) {
+        const out = [];
+        for (let i = 0, len = arr.length; i < len; i++) {
+            const item = arr[i];
+            const obj = [];
+            for (let k in item) {
                 obj[k] = item[k];
             }
             out.push(obj);
@@ -91,13 +90,13 @@ class Model {
         return out;
     };
 
-    // ЛОГИКА ИГРОКА
+    // PLAYER LOGIC
     movePlayer(direction, level) {
-        const playerCoords = this.findPlayerCoords(this.map);// взять координаты из копии
+        const playerCoords = this.findPlayerCoords(this.map);// taking coordinates
         const newPlayerY = this.getY(playerCoords.y, direction, 1)
         const newPlayerX = this.getX(playerCoords.x, direction, 1)
 
-        //оставлять за собой фон и цели исходя из карты уровня (не копии)
+        // leave background based on initial map(not copy)
         this.map[playerCoords.y][playerCoords.x] =
             this.isTarget(level[playerCoords.y][playerCoords.x]) ? 4 : 2;
         if (this.isAudio) {
@@ -105,53 +104,50 @@ class Model {
         }
         ;
 
-        //если есть стена, то шаг = 0
+        //if there is a wall then step = 0
         if (this.isWall(this.map[newPlayerY][newPlayerX])) {
             this.map[this.getY(playerCoords.y, direction, 0)][this.getX(playerCoords.x, direction, 0)] = 1;
             this.view.drawField(direction, this.map);
             if (this.isAudio) {
                 audioWalking.pause();
-                audioWall.play()
-            }
-            ;
+                audioWall.play()}
         }
-        // если за игроком куб, то
+        //  if there is a cube in front of the player
         else if (this.isBrick(this.map[newPlayerY][newPlayerX])) {
-            //если через 2 шага там НЕ стена и НЕ куб, то сдвигаем игрока на 1 шаг а кубик на 2 от игрока соотвественно
+            // if in 2 steps there is not a wall and not a cube, then moving the player for 1 step and cube for 2 steps
             if (this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] !== 0
-                && this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] != 3
-                && this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] != 5) {
-                // если через два шага НЕ цель, то двигает игрока и кубик
-                if (this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] != 4) {
-                    this.map[this.getY(playerCoords.y, direction, 1)][this.getX(playerCoords.x, direction, 1)] = 1;
-                    this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] = 3;
+                && this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] !== 3
+                && this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] !== 5) {
+                // if in 2 step there is no target, then moving player and cube
+                if (this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] !== 4)
+                {
+                    this.map[this.getY(playerCoords.y, direction, 1)][this.getX(playerCoords.x, direction, 1)] === 1;
+                    this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] === 3;
                 }
-                // если там ЦЕЛЬ, то кубик делаем зеленым( т.е успешным)
+                    // if there is target then making the cube green
                 else {
                     this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] = 5;
                     if (this.isAudio) {
-                        audioSuccess.play()
-                    }
-                    ;
+                        audioSuccess.play()}
                     this.map[this.getY(playerCoords.y, direction, 1)][this.getX(playerCoords.x, direction, 1)] = 1;
                 }
             }
-            //а если там стена, то игрока не двигать больше
+                // if there is a wall do not move the player
             else {
                 this.map[this.getY(playerCoords.y, direction, 0)][this.getX(playerCoords.x, direction, 0)] = 1;
                 this.map[this.getY(playerCoords.y, direction, 1)][this.getX(playerCoords.x, direction, 1)] = 3;
             }
             this.view.drawField(direction, this.map);
         }
-        //если за игроком ЗЕЛЕНЫЙ КУБ, то при движении куб сделать обычным
+            // if moving success cube from the target
         else if (this.isSuccess(this.map[newPlayerY][newPlayerX])) {
-            //если через 2 шага там НЕ стена, то сдвигаем игрока на 1 шаг а кубик на 2 от игрока соотвественно
-            if (this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] == 2) {
+            // if in 2 steps there is no wall, moving player and cube for 1 and 2 steps
+            if (this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] === 2) {
                 this.map[this.getY(playerCoords.y, direction, 1)][this.getX(playerCoords.x, direction, 1)] = 1;
                 this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] = 3;
             }
-            //а если две цели подряд
-            else if (this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] == 4) {
+            //if two targets in a row
+            else if (this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] === 4) {
                 this.map[this.getY(playerCoords.y, direction, 2)][this.getX(playerCoords.x, direction, 2)] = 5;
                 if (this.isAudio) {
                     audioSuccess.play()
@@ -167,13 +163,13 @@ class Model {
             this.map[this.getY(playerCoords.y, direction, 1)][this.getX(playerCoords.x, direction, 1)] = 1;
             this.view.drawField(direction, this.map);
         }
-        this.countTargets(this.map);// считать цели
+        this.countTargets(this.map);// counting targets
 
     };
 
-    findPlayerCoords = (map) => { //найти координаты игрока
-        const y = map.findIndex(row => row.includes(1));// если в строке есть игрок дать его индекс
-        const x = map[y].indexOf(1); //дать его индекс в строке
+    findPlayerCoords = (map) => { //finding coordinates of the player
+        const y = map.findIndex(row => row.includes(1));
+        const x = map[y].indexOf(1);
         return {
             x,
             y,
@@ -183,7 +179,8 @@ class Model {
             sideRight: map[y][x + 1],
         }
     };
-    // функции поиска соседних блоков
+
+    //func to search other blocks
     isBrick = (cell) => [3].includes(cell);// есть ли кубик в клетке
     isPlayer = (cell) => [1].includes(cell);
     isTraversible = (cell) => [2].includes(cell);
@@ -191,7 +188,7 @@ class Model {
     isTarget = (cell) => [4].includes(cell);
     isSuccess = (cell) => [5].includes(cell);
 
-    // функции поиска координат игока
+    // func to find current coordinates of the player
     getX = (x, direction, spaces = 1) => {
         if (direction === 'up' || direction === 'down') {
             return x
@@ -216,22 +213,22 @@ class Model {
             return y - spaces
         }
     };
-    // кнопка аудио
+    // audio button
     setAudio = (arg) => {
         this.isAudio = arg;
         this.view.changeMusicBtn();
     }
-    //ф-я подсчета целей
+    //counting targets
     countTargets = (map) => {
         let countT = [];
-        map.forEach((row, y) => { // взять каждую строку по У вниз
-            row.forEach((cell, x) => { // каждую клетку
-                if (cell == 3) {
+        map.forEach((row) => {
+            row.forEach((cell) => {
+                if (cell === 3) {
                     countT.push(cell);
                 }
             })
         })
-        if (countT.length == 0) {
+        if (countT.length === 0) {
             this.view.showModal();
             this.scorePoint = (100 - this.countMove);
             this.saveScore();
@@ -242,12 +239,12 @@ class Model {
 
         }
     };
-    // ф-я подсчета ходов
+    // func to count moves
     countMoves = () => {
         this.countMove++;
         this.view.showMoves(this.countMove);
     }
-    // добавление нового пользователя
+    // adding new user
     addUser = (signName, signEmail, signPass) => {
         let userName = signName;
         let userEmail = signEmail;
@@ -255,7 +252,7 @@ class Model {
         let myModel = this;
         let myView = this.view;
         firebase.auth().createUserWithEmailAndPassword(userEmail, password)
-            .then(function (user) {
+            .then(function () {
                 myDB.ref('users/' + `user_${userName.replace(/\s/g, "").toLowerCase()}`).set({
                     username: `${userName}`,
                     email: `${userEmail}`,
@@ -270,28 +267,27 @@ class Model {
             })
             .catch(function (error) {
                 // Handle Errors here.
-                var errorCode = error.code;
-                var errorMessage = error.message;
-                console.log("Eroor Msg" + errorMessage);
+                const errorMessage = error.message;
+                console.log("Error Msg" + errorMessage);
                 myView.showError(error.message);
             });
 
     }
-    // логин уже существующего пользователя
+    // login of registered user
     loginUser = (logEmail, logPass) => {
         let userEmail = logEmail;
         let password = logPass;
         let myView = this.view;
         if (userEmail && password) {
             firebase.auth().signInWithEmailAndPassword(userEmail, password)
-                .then(function (user) {
-                    var user = firebase.auth().currentUser;
-                    var ref = firebase.database().ref();
+                .then(function () {
+                    const user = firebase.auth().currentUser;
+                    const ref = firebase.database().ref();
                     ref.child("users").orderByChild("email").equalTo(`${user.email}`).once("value", snapshot => {
                         if (snapshot.exists()) {
                             const userData = snapshot.val();
-                            var userDataName = Object.keys(userData);
-                            var username = userData[userDataName].username;
+                            const userDataName = Object.keys(userData);
+                            const username = userData[userDataName].username;
                             myView.renderContent('menu');
                         }
                     });
@@ -303,16 +299,16 @@ class Model {
         }
     }
     saveScore = () => {
-        var user = firebase.auth().currentUser;
-        var ref = firebase.database().ref();
+        const user = firebase.auth().currentUser;
+        const ref = firebase.database().ref();
         ref.child("users").orderByChild("email").equalTo(`${user.email}`).once("value", snapshot => {
             if (snapshot.exists()) {
                 const userData = snapshot.val();
-                var userDataName = Object.keys(userData);
-                var userName = userData[userDataName].username.toLowerCase();
-                var previousScore = userData[userDataName].score ? userData[userDataName].score : 0;
-                var level = userData[userDataName].level; //уровень в базе
-                if (level < this.level) { // если уровень в базе меньш того, что проходит игрок
+                const userDataName = Object.keys(userData);
+                const userName = userData[userDataName].username.toLowerCase();
+                const previousScore = userData[userDataName].score ? userData[userDataName].score : 0;
+                const level = userData[userDataName].level; // level in firebase
+                if (level < this.level) {
                     myDB.ref('users/' + `user_${userName}`).update({
                         score: Number(previousScore) + Number(this.scorePoint),
                         level: `${this.level}`,
@@ -346,24 +342,24 @@ class Model {
         myDB.ref("users/").on("value", function (snapshot) {
             arrScore = snapshot.val();
             Object.keys(arrScore).forEach(function (key) {
-                var val = arrScore[key];
-                let username = val.username.toUpperCase().replace(/\s/g, '');
-                let score = val.score;
+                const val = arrScore[key];
+                const username = val.username.toUpperCase().replace(/\s/g, '');
+                const score = val.score;
                 if (score) {
                     list[username] = score;
                 }
 
             })
             let sortAssocObject = (list) => { // сортировка по возрастанию
-                var sortable = [];
-                for (var key in list) {
+                const sortable = [];
+                for (let key in list) {
                     sortable.push([key, list[key]]);
                 }
                 sortable.sort(function (a, b) {
                     return (a[1] > b[1] ? -1 : (a[1] > b[1] ? 1 : 0));
                 });
-                var orderedList = {};
-                for (var idx in sortable) {
+                const orderedList = {};
+                for (let idx in sortable) {
                     orderedList[sortable[idx][0]] = sortable[idx][1];
                 }
                 myView.getRecords(orderedList);
@@ -384,16 +380,15 @@ class Model {
         this.view.closeDelData();
     }
 
-    // удалить данные об очках игрока
+    // delete score of the user
     delData(emailToDel) {
         let myView = this.view;
-        var user = firebase.auth().currentUser;
-        var ref = firebase.database().ref();
+        const ref = firebase.database().ref();
         ref.child("users").orderByChild("email").equalTo(`${emailToDel}`).once("value", snapshot => {
             if (snapshot.exists()) {
                 const userData = snapshot.val();
-                var userDataName = Object.keys(userData);
-                var username = userData[userDataName].username;
+                const userDataName = Object.keys(userData);
+                const username = userData[userDataName].username;
                 myDB.ref('users/' + `user_${username}/` + 'score').remove();
                 myView.closeDelData();
             }
@@ -410,16 +405,16 @@ class Model {
         this.view.closeShowModalRestart();
     }
 
-    // кнопка перезапуска игры
+    // restart the game
     toRestartGame() {
         let restartLevel = this.restartLevel;
-        let targetlevel = this.targetLevel;
-        this.updateState('play', restartLevel, targetlevel);
+        let targetLevel = this.targetLevel;
+        this.updateState('play', restartLevel, targetLevel);
         this.view.showMoves(this.countMove = 0);
         this.view.closeShowModalRestart();
     }
 
-    // обновление страницы
+    // reload the game
     reload() {
         this.updateState('levels');
     }
